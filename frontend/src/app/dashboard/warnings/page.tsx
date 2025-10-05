@@ -30,6 +30,7 @@ export default function WarningsPage() {
   const [selectedSeverity, setSelectedSeverity] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showIssueModal, setShowIssueModal] = useState(false);
 
   useEffect(() => {
     fetchWarnings();
@@ -118,6 +119,29 @@ export default function WarningsPage() {
     return matchesSearch && matchesSeverity && matchesStatus;
   });
 
+  const handleResolveWarning = (warningId: string) => {
+    setWarnings(prev => prev.map(warning => 
+      warning._id === warningId 
+        ? { ...warning, status: 'Resolved' as const, resolvedDate: new Date().toISOString() }
+        : warning
+    ));
+    alert('Warning resolved successfully!');
+  };
+
+  const handleViewWarning = (warningId: string) => {
+    const warning = warnings.find(w => w._id === warningId);
+    if (warning) {
+      alert(`Warning Details:\n\nTitle: ${warning.title}\nDescription: ${warning.description}\nMember: ${warning.member.name}\nSeverity: ${warning.severity}\nStatus: ${warning.status}`);
+    }
+  };
+
+  const handleIssueWarning = (e: React.FormEvent) => {
+    e.preventDefault();
+    // For now, just show success message
+    alert('Warning issued successfully!');
+    setShowIssueModal(false);
+  };
+
   const getSeverityBadge = (severity: string) => {
     const baseClasses = "px-2 inline-flex text-xs leading-5 font-semibold rounded-full";
     switch (severity) {
@@ -152,12 +176,15 @@ export default function WarningsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Warnings</h1>
           <p className="text-gray-600">Manage member warnings and disciplinary actions</p>
         </div>
-        <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium">
+        <button 
+          onClick={() => setShowIssueModal(true)}
+          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium w-full sm:w-auto"
+        >
           Issue Warning
         </button>
       </div>
@@ -215,8 +242,8 @@ export default function WarningsPage() {
         </div>
       </div>
 
-      {/* Warnings Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Warnings Table - Desktop */}
+      <div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -278,16 +305,88 @@ export default function WarningsPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-orange-600 hover:text-orange-900 mr-4">View</button>
-                    {warning.status === 'Active' && (
-                      <button className="text-green-600 hover:text-green-900">Resolve</button>
-                    )}
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button 
+                        onClick={() => handleViewWarning(warning._id)}
+                        className="text-orange-600 hover:text-orange-900 text-left"
+                      >
+                        View
+                      </button>
+                      {warning.status === 'Active' && (
+                        <button 
+                          onClick={() => handleResolveWarning(warning._id)}
+                          className="text-green-600 hover:text-green-900 text-left"
+                        >
+                          Resolve
+                        </button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        
+        {filteredWarnings.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500">No warnings found matching your criteria.</div>
+          </div>
+        )}
+      </div>
+
+      {/* Warnings Cards - Mobile */}
+      <div className="lg:hidden space-y-4">
+        {filteredWarnings.map((warning) => (
+          <div key={warning._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900 mb-1">{warning.title}</h3>
+                <p className="text-sm text-gray-500 mb-2">{warning.description}</p>
+                <div className="text-xs text-gray-400">Category: {warning.category}</div>
+              </div>
+              <div className="flex flex-col gap-2 ml-4">
+                <span className={getSeverityBadge(warning.severity)}>
+                  {warning.severity}
+                </span>
+                <span className={getStatusBadge(warning.status)}>
+                  {warning.status}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+              <div>
+                <div className="text-sm font-medium text-gray-900">{warning.member.name}</div>
+                <div className="text-xs text-gray-500">{warning.member.studentId}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {new Date(warning.issuedDate).toLocaleDateString()}
+                  {warning.resolvedDate && (
+                    <span className="text-green-600 ml-2">
+                      Resolved: {new Date(warning.resolvedDate).toLocaleDateString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button 
+                  onClick={() => handleViewWarning(warning._id)}
+                  className="text-orange-600 hover:text-orange-900 text-sm font-medium"
+                >
+                  View
+                </button>
+                {warning.status === 'Active' && (
+                  <button 
+                    onClick={() => handleResolveWarning(warning._id)}
+                    className="text-green-600 hover:text-green-900 text-sm font-medium"
+                  >
+                    Resolve
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
         
         {filteredWarnings.length === 0 && (
           <div className="text-center py-12">
@@ -321,6 +420,90 @@ export default function WarningsPage() {
           <div className="text-sm text-gray-600">Resolved</div>
         </div>
       </div>
+
+      {/* Issue Warning Modal */}
+      {showIssueModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Issue Warning</h2>
+              <button
+                onClick={() => setShowIssueModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleIssueWarning} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Member Email</label>
+                <input
+                  type="email"
+                  placeholder="member@example.com"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Warning Title</label>
+                <input
+                  type="text"
+                  placeholder="Enter warning title"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Severity</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                  <option value="Low">Low</option>
+                  <option value="Medium">Medium</option>
+                  <option value="High">High</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                  <option value="Attendance">Attendance</option>
+                  <option value="Behavior">Behavior</option>
+                  <option value="Performance">Performance</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  rows={4}
+                  placeholder="Describe the warning reason..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                  required
+                ></textarea>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowIssueModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium"
+                >
+                  Issue Warning
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

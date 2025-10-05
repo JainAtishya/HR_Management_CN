@@ -97,9 +97,21 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex relative">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+      
       {/* Sidebar */}
-      <div className={`bg-white shadow-lg transition-all duration-300 ${sidebarOpen ? 'w-64' : 'w-16'} flex flex-col`}>
+      <div className={`bg-white shadow-lg transition-all duration-300 flex flex-col z-30 ${
+        sidebarOpen 
+          ? 'w-64 fixed lg:relative inset-y-0 left-0' 
+          : 'w-0 lg:w-16 -translate-x-full lg:translate-x-0 overflow-hidden lg:overflow-visible'
+      }`}>
         {/* Logo */}
         <div className="flex items-center justify-center h-16 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -160,7 +172,17 @@ export default function DashboardLayout({
         <header className="bg-white shadow-sm border-b border-gray-200">
           <div className="px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
+              <div className="flex items-center space-x-4">
+                {/* Mobile menu button */}
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="lg:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                </button>
+                
                 <h1 className="text-xl font-semibold text-gray-900">
                   {navigation.find(item => item.href === pathname)?.name || 'Dashboard'}
                 </h1>

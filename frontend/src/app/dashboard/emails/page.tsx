@@ -174,14 +174,14 @@ export default function EmailsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Email Management</h1>
           <p className="text-gray-600">Send and manage club member communications</p>
         </div>
         <button 
           onClick={() => setShowCompose(true)}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium"
+          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium w-full sm:w-auto"
         >
           Compose Email
         </button>
@@ -269,8 +269,8 @@ export default function EmailsPage() {
         </div>
       </div>
 
-      {/* Emails Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Emails Table - Desktop */}
+      <div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -360,10 +360,66 @@ export default function EmailsPage() {
         )}
       </div>
 
+      {/* Emails Cards - Mobile */}
+      <div className="lg:hidden space-y-4">
+        {filteredEmails.map((email) => (
+          <div key={email._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-gray-900 mb-1">{email.subject}</h3>
+                <p className="text-sm text-gray-500 mb-2 line-clamp-2">{email.body}</p>
+                {email.templateUsed && (
+                  <div className="text-xs text-gray-400 mb-2">Template: {email.templateUsed}</div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2 ml-4">
+                <span className={getTypeBadge(email.type)}>
+                  {email.type}
+                </span>
+                <span className={getStatusBadge(email.status)}>
+                  {email.status}
+                </span>
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+              <div>
+                <div className="text-sm font-medium text-gray-900">{email.recipient.name}</div>
+                <div className="text-xs text-gray-500">{email.recipient.email}</div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {new Date(email.sentDate).toLocaleDateString()} {new Date(email.sentDate).toLocaleTimeString()}
+                  {email.openedDate && (
+                    <div className="text-green-600 mt-1">
+                      Opened: {new Date(email.openedDate).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button className="text-orange-600 hover:text-orange-900 text-sm font-medium">
+                  View
+                </button>
+                {email.status === 'Failed' && (
+                  <button className="text-blue-600 hover:text-blue-900 text-sm font-medium">
+                    Resend
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+        
+        {filteredEmails.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500">No emails found matching your criteria.</div>
+          </div>
+        )}
+      </div>
+
       {/* Compose Email Modal */}
       {showCompose && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-gray-900">Compose Email</h2>
               <button

@@ -23,6 +23,7 @@ export default function MembersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [showAddModal, setShowAddModal] = useState(false);
 
   useEffect(() => {
     fetchMembers();
@@ -128,6 +129,24 @@ export default function MembersPage() {
     }
   };
 
+  const handleAddMember = (e: React.FormEvent) => {
+    e.preventDefault();
+    // For now, just show success message
+    alert('Member added successfully!');
+    setShowAddModal(false);
+  };
+
+  const handleViewMember = (memberId: string) => {
+    const member = members.find(m => m._id === memberId);
+    if (member) {
+      alert(`Member Details:\n\nName: ${member.name}\nEmail: ${member.email}\nDepartment: ${member.department}\nPosition: ${member.position}\nStatus: ${member.status}\nSkills: ${member.skills.join(', ')}`);
+    }
+  };
+
+  const handleEditMember = (memberId: string) => {
+    alert(`Edit member functionality will be implemented here for member ID: ${memberId}`);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -139,12 +158,15 @@ export default function MembersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Members</h1>
           <p className="text-gray-600">Manage club members and their information</p>
         </div>
-        <button className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium">
+        <button 
+          onClick={() => setShowAddModal(true)}
+          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium w-full sm:w-auto"
+        >
           Add Member
         </button>
       </div>
@@ -204,8 +226,8 @@ export default function MembersPage() {
         </div>
       </div>
 
-      {/* Members Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      {/* Members Table - Desktop */}
+      <div className="hidden lg:block bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
@@ -273,14 +295,91 @@ export default function MembersPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-orange-600 hover:text-orange-900 mr-4">Edit</button>
-                    <button className="text-red-600 hover:text-red-900">Delete</button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <button 
+                        onClick={() => handleViewMember(member._id)}
+                        className="text-blue-600 hover:text-blue-900 text-left"
+                      >
+                        View
+                      </button>
+                      <button 
+                        onClick={() => handleEditMember(member._id)}
+                        className="text-orange-600 hover:text-orange-900 text-left"
+                      >
+                        Edit
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        
+        {filteredMembers.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-gray-500">No members found matching your criteria.</div>
+          </div>
+        )}
+      </div>
+
+      {/* Members Cards - Mobile */}
+      <div className="lg:hidden space-y-4">
+        {filteredMembers.map((member) => (
+          <div key={member._id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1">
+                <h3 className="text-lg font-medium text-gray-900 mb-1">{member.name}</h3>
+                <p className="text-sm text-gray-500 mb-1">{member.email}</p>
+                <div className="text-sm text-gray-600">{member.studentId} • {member.department}</div>
+              </div>
+              <div className="flex flex-col gap-2 ml-4">
+                <span className={getStatusBadge(member.status)}>
+                  {member.status}
+                </span>
+                <span className={getPositionBadge(member.position)}>
+                  {member.position}
+                </span>
+              </div>
+            </div>
+            
+            <div className="mb-3">
+              <div className="text-sm text-gray-600 mb-2">Skills:</div>
+              <div className="flex flex-wrap gap-1">
+                {member.skills.slice(0, 3).map((skill, index) => (
+                  <span key={index} className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded">
+                    {skill}
+                  </span>
+                ))}
+                {member.skills.length > 3 && (
+                  <span className="px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded">
+                    +{member.skills.length - 3} more
+                  </span>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+              <div className="text-sm text-gray-500">
+                Joined: {new Date(member.joinDate).toLocaleDateString()}
+              </div>
+              <div className="flex gap-2">
+                <button 
+                  onClick={() => handleViewMember(member._id)}
+                  className="text-orange-600 hover:text-orange-900 text-sm font-medium"
+                >
+                  View
+                </button>
+                <button 
+                  onClick={() => handleEditMember(member._id)}
+                  className="text-blue-600 hover:text-blue-900 text-sm font-medium"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
         
         {filteredMembers.length === 0 && (
           <div className="text-center py-12">
@@ -314,6 +413,124 @@ export default function MembersPage() {
           <div className="text-sm text-gray-600">Departments</div>
         </div>
       </div>
+
+      {/* Add Member Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-900">Add New Member</h2>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleAddMember} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                  <input
+                    type="text"
+                    placeholder="Enter full name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    placeholder="member@example.com"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                  <input
+                    type="tel"
+                    placeholder="9876543210"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Student ID</label>
+                  <input
+                    type="text"
+                    placeholder="CS2024001"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="CSE">Computer Science</option>
+                    <option value="IT">Information Technology</option>
+                    <option value="ECE">Electronics</option>
+                    <option value="ME">Mechanical</option>
+                    <option value="CE">Civil</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Position</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="Member">Member</option>
+                    <option value="Team Lead">Team Lead</option>
+                    <option value="Core Team">Core Team</option>
+                    <option value="President">President</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                  <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500">
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Skills (comma separated)</label>
+                <input
+                  type="text"
+                  placeholder="React, Node.js, Python, Java"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                />
+              </div>
+              
+              <div className="flex flex-col sm:flex-row justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg font-medium"
+                >
+                  Add Member
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
